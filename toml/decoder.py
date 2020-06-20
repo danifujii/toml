@@ -146,7 +146,7 @@ def load(f, _dict=dict, decoder=None):
         d = decoder.get_empty_table()
         for l in f:  # noqa: E741
             if op.exists(l):
-                d.update(load(l, _dict, decoder))
+                _merge_dict(d, load(l, _dict, decoder))
             else:
                 warn("Non-existent filename in list with at least one valid "
                      "filename")
@@ -593,6 +593,18 @@ def _load_unicode_escapes(v, hexbytes, prefix):
         v += unichr(int(hxb, 16))
         v += unicode(hx[len(hxb):])
     return v
+
+
+def _merge_dict(dict1, dict2):
+    """Merge dicts, where repeated keys in dict2 override values in dict1. dict1 is modified in-place."""
+    for key, value in dict2.items():
+        if key in dict1:
+            if isinstance(dict1[key], dict) and isinstance(value, dict):
+                _merge_dict(dict1[key], value)
+            else:
+                dict1[key] = value
+        else:
+            dict1[key] = value
 
 
 # Unescape TOML string values.
